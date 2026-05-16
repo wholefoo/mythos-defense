@@ -1,0 +1,32 @@
+{
+  "finding_id": "MOCK-2026-0001",
+  "source": "mock",
+  "severity": "HIGH",
+  "vuln_class": "AUTH_BYPASS",
+  "title": "JWT alg=none accepted on /api/admin endpoints",
+  "description": "The auth middleware uses jsonwebtoken.verify() without specifying the algorithms option. When the secret is empty or falsy, the library accepts tokens signed with alg=none, allowing complete authentication bypass.",
+  "affected_locations": [
+    {
+      "path": "src/middleware/auth.ts",
+      "line_start": 47,
+      "line_end": 52,
+      "function": "verifyJwt"
+    }
+  ],
+  "root_cause": "jsonwebtoken.verify() called without algorithms option; defaults accept alg=none when secret is empty string. Affects all admin endpoints downstream.",
+  "poc": {
+    "poc_type": "http_request",
+    "steps": [
+      "Construct an unsigned JWT with header {\"alg\":\"none\",\"typ\":\"JWT\"} and payload {\"sub\":\"admin\",\"role\":\"admin\"}",
+      "Send GET /api/admin/users with Authorization: Bearer <token>",
+      "Server returns 200 with full user list"
+    ],
+    "expected_evidence": "HTTP 200 response containing user list, despite no valid signature",
+    "artifacts": []
+  },
+  "impact_confidentiality": "HIGH",
+  "impact_integrity": "HIGH",
+  "impact_availability": "LOW",
+  "cwe_ids": ["CWE-347"],
+  "references": ["https://cwe.mitre.org/data/definitions/347.html"]
+}
