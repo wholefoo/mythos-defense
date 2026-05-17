@@ -2,6 +2,7 @@
 from __future__ import annotations
 import json
 from mythos_defense.agents.base import BaseAgent, AgentResult
+from mythos_defense.utils import parse_llm_json
 
 
 class DeploymentAgent(BaseAgent):
@@ -25,12 +26,7 @@ Produce the deployment hardening JSON.
 """
         result = self._call(system, user)
         try:
-            text = result.output.strip()
-            if text.startswith("```"):
-                text = text.split("```")[1]
-                if text.startswith("json"):
-                    text = text[4:]
-            result.structured = json.loads(text.strip())
-        except json.JSONDecodeError as e:
+            result.structured = parse_llm_json(result.output)
+        except (ValueError, KeyError) as e:
             raise ValueError(f"Deployment output not valid JSON: {e}")
         return result

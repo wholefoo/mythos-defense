@@ -70,6 +70,9 @@ def harden_cmd(workspace: Path, brief: Path | None, classes: str,
         adapter = MockAdapter(fixtures_dir=fixtures_dir)
     elif red_team_adapter == "semgrep":
         adapter = SemgrepAdapter(config="auto")
+    else:
+        console.print(f"[red]Unknown adapter: {red_team_adapter}[/]")
+        raise SystemExit(1)
 
     # Run orchestrator
     import uuid

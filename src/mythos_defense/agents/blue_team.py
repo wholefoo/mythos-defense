@@ -1,9 +1,12 @@
 """Blue Team Agent — patches findings."""
 from __future__ import annotations
-import json
+import logging
 from pathlib import Path
 from mythos_defense.agents.base import BaseAgent, AgentResult
 from mythos_defense.schemas.findings import Finding
+from mythos_defense.utils import parse_llm_json
+
+logger = logging.getLogger(__name__)
 
 
 class BlueTeamAgent(BaseAgent):
@@ -20,8 +23,13 @@ class BlueTeamAgent(BaseAgent):
         system = self._load_prompt("blue_team")
 
         file_contents = []
+        resolved_ws = workspace.resolve()
         for loc in finding.affected_locations:
             file_path = workspace / loc.path
+            # Security: prevent path traversal outside workspace
+            if not file_path.resolve().is_relative_to(resolved_ws):
+                logger.warning("Path traversal blocked: %s", loc.path)
+                continue
             if file_path.exists() and file_path.is_file():
                 content = file_path.read_text()
                 file_contents.append(f"### {loc.path}\n```\n{content}\n```")
@@ -49,13 +57,8 @@ Produce the patch JSON.
         result = self._call(system, user)
 
         try:
-            text = result.output.strip()
-            if text.startswith("```"):
-                text = text.split("```")[1]
-                if text.startswith("json"):
-                    text = text[4:]
-            result.structured = json.loads(text.strip())
-        except json.JSONDecodeError as e:
+            result.structured = parse_llm_json(result.output)
+        except (ValueError, KeyError) as e:
             raise ValueError(f"Blue Team output not valid JSON: {e}\nRaw: {result.output[:500]}")
 
         return result

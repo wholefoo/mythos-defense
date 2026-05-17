@@ -1,6 +1,7 @@
 """mythos audit — SBOM generation + dependency vulnerability audit."""
 from __future__ import annotations
 import json
+import logging
 import os
 import subprocess
 import time
@@ -9,6 +10,9 @@ import click
 from rich.console import Console
 from rich.table import Table
 from anthropic import Anthropic
+from mythos_defense.utils import sev_color
+
+logger = logging.getLogger(__name__)
 
 console = Console()
 
@@ -124,7 +128,8 @@ def _audit_npm(workspace: Path, output: Path, sbom_format: str, fix: bool) -> tu
             cwd=workspace, capture_output=True, text=True, timeout=120,
         )
         audit_data = json.loads(r.stdout) if r.stdout else {}
-    except (subprocess.TimeoutExpired, json.JSONDecodeError, FileNotFoundError):
+    except (subprocess.TimeoutExpired, json.JSONDecodeError, FileNotFoundError) as e:
+        logger.warning("npm audit failed: %s", e)
         console.print("  [yellow]npm audit failed[/]")
         return [], dep_count
 
@@ -137,7 +142,7 @@ def _audit_npm(workspace: Path, output: Path, sbom_format: str, fix: bool) -> tu
             "fix_available": advisory.get("fixAvailable", False),
         })
         sev = advisory.get("severity", "?")
-        console.print(f"  [{_sev_color(sev)}]{sev}[/] {name}")
+        console.print(f"  [{sev_color(sev)}]{sev}[/] {name}")
 
     # Auto-fix
     if fix and vulns:
@@ -217,6 +222,3 @@ def _generate_sbom(workspace: Path, output: Path, fmt: str, managers: list) -> P
     return None
 
 
-def _sev_color(severity: str) -> str:
-    return {"critical": "red", "high": "red", "moderate": "yellow",
-            "medium": "yellow", "low": "dim"}.get(severity, "white")

@@ -1,9 +1,13 @@
 """Supply Chain Agent."""
 from __future__ import annotations
 import json
+import logging
 import subprocess
 from pathlib import Path
 from mythos_defense.agents.base import BaseAgent, AgentResult
+from mythos_defense.utils import parse_llm_json
+
+logger = logging.getLogger(__name__)
 
 
 class SupplyChainAgent(BaseAgent):
@@ -28,7 +32,8 @@ class SupplyChainAgent(BaseAgent):
                     timeout=120,
                 )
                 audit_output = r.stdout[:50000]
-            except Exception as e:
+            except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+                logger.warning("npm audit failed: %s", e)
                 audit_output = f"(npm audit failed: {e})"
 
         elif (workspace / "requirements.txt").exists() or (workspace / "pyproject.toml").exists():
@@ -43,7 +48,8 @@ class SupplyChainAgent(BaseAgent):
                     timeout=120,
                 )
                 audit_output = r.stdout[:50000]
-            except Exception as e:
+            except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+                logger.warning("pip-audit failed: %s", e)
                 audit_output = f"(pip-audit failed or not installed: {e})"
 
         manifest_block = "\n\n".join(f"### {name}\n```\n{c}\n```" for name, c in manifests)
@@ -62,12 +68,7 @@ Produce the supply chain assessment JSON.
 """
         result = self._call(system, user)
         try:
-            text = result.output.strip()
-            if text.startswith("```"):
-                text = text.split("```")[1]
-                if text.startswith("json"):
-                    text = text[4:]
-            result.structured = json.loads(text.strip())
-        except json.JSONDecodeError as e:
+            result.structured = parse_llm_json(result.output)
+        except (ValueError, KeyError) as e:
             raise ValueError(f"Supply Chain output not valid JSON: {e}")
         return result

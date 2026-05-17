@@ -22,7 +22,13 @@ class BaseAgent:
     max_tokens: int = 8000
 
     def __init__(self, api_key: str | None = None):
-        self.client = Anthropic(api_key=api_key or os.environ["ANTHROPIC_API_KEY"])
+        key = api_key or os.environ.get("ANTHROPIC_API_KEY")
+        if not key:
+            raise ValueError(
+                "ANTHROPIC_API_KEY is not set. "
+                "Set it in your .env file or pass api_key= to the agent."
+            )
+        self.client = Anthropic(api_key=key)
 
     def _load_prompt(self, name: str) -> str:
         path = Path(__file__).parent.parent / "prompts" / f"{name}.md"

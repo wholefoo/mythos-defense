@@ -1,8 +1,8 @@
 """Finding schema — the contract between Red Team sources and defensive agents."""
 from __future__ import annotations
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
-from typing import Optional
+from typing import Any, Optional
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -92,7 +92,7 @@ class Finding(BaseModel):
     cwe_ids: list[str] = Field(default_factory=list)
     references: list[str] = Field(default_factory=list)
 
-    discovered_at: datetime = Field(default_factory=lambda: datetime.now(tz=__import__("datetime").timezone.utc))
+    discovered_at: datetime = Field(default_factory=lambda: datetime.now(tz=timezone.utc))
 
     patch_attempts: int = 0
     verified_blocked: bool = False
@@ -107,4 +107,4 @@ class FindingSet(BaseModel):
     source: str
     findings: list[Finding]
     coverage_notes: Optional[str] = None
-    budget_consumed: dict = Field(default_factory=dict)
+    budget_consumed: dict[str, Any] = Field(default_factory=dict)

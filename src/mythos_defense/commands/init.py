@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import os
 import subprocess
-import shutil
 from pathlib import Path
 import click
 from rich.console import Console
@@ -139,7 +138,7 @@ def init_cmd(workdir: Path, claude_key: str | None, codex_key: str | None,
 
 def _check_key(name: str, value: str | None):
     if value and len(value) > 10:
-        console.print(f"  [green]PASS[/] {name} ({value[:8]}...)")
+        console.print(f"  [green]PASS[/] {name} (set, length={len(value)})")
     else:
         console.print(f"  [yellow]SKIP[/] {name} (not set)")
 

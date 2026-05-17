@@ -2,9 +2,11 @@ from pathlib import Path
 from mythos_defense.adapters.mock import MockAdapter
 from mythos_defense.adapters.base import AdapterTarget
 
+FIXTURES_DIR = Path(__file__).parent / "fixtures" / "findings"
+
 
 def test_mock_adapter_loads_fixtures():
-    adapter = MockAdapter(fixtures_dir=Path("tests/fixtures/findings"))
+    adapter = MockAdapter(fixtures_dir=FIXTURES_DIR)
     target = AdapterTarget(
         workspace=Path("."),
         workflow_id="test-001",
@@ -16,7 +18,7 @@ def test_mock_adapter_loads_fixtures():
 
 
 def test_mock_adapter_honors_exclusions():
-    adapter = MockAdapter(fixtures_dir=Path("tests/fixtures/findings"))
+    adapter = MockAdapter(fixtures_dir=FIXTURES_DIR)
     target = AdapterTarget(
         workspace=Path("."),
         workflow_id="test-001",

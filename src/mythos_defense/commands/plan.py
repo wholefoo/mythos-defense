@@ -6,6 +6,7 @@ from pathlib import Path
 import click
 from rich.console import Console
 from anthropic import Anthropic
+from mythos_defense.utils import parse_llm_json
 
 console = Console()
 
@@ -123,12 +124,8 @@ Produce the plan JSON.
 
     # Parse JSON
     try:
-        if output.startswith("```"):
-            output = output.split("```")[1]
-            if output.startswith("json"):
-                output = output[4:]
-        plan = json.loads(output.strip())
-    except json.JSONDecodeError as e:
+        plan = parse_llm_json(output)
+    except (json.JSONDecodeError, ValueError) as e:
         console.print(f"[red]Failed to parse plan JSON:[/] {e}")
         console.print(f"Raw output saved to plan_raw.txt")
         Path("plan_raw.txt").write_text(output)

@@ -21,6 +21,9 @@ dev = [
     "ruff>=0.4.0",
     "mypy>=1.8.0",
 ]
+review = [
+    "playwright>=1.40.0",
+]
 
 [project.scripts]
 mythos = "mythos_defense.cli:main"
@@ -33,4 +36,18 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [tool.setuptools.package-data]
-mythos_defense = ["prompts/*.md"]
+mythos_defense = ["prompts/*.md", "py.typed"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = false
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false

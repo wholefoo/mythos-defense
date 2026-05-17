@@ -52,6 +52,7 @@ class Orchestrator:
 
     def run(self, cfg: WorkflowConfig) -> WorkflowResult:
         start = time.time()
+        cfg.budget.started_at = start
         cfg.output_dir.mkdir(parents=True, exist_ok=True)
 
         console.print("[bold cyan]> Architect: producing threat model[/]")

@@ -1,6 +1,7 @@
 """mythos build — autonomous code generation from a plan."""
 from __future__ import annotations
 import json
+import logging
 import os
 import time
 from pathlib import Path
@@ -8,6 +9,9 @@ import click
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from anthropic import Anthropic
+from mythos_defense.utils import parse_llm_json
+
+logger = logging.getLogger(__name__)
 
 console = Console()
 
@@ -134,12 +138,9 @@ Generate the files for your area of responsibility. Output JSON only.
 
         output = response.content[0].text.strip()
         try:
-            if output.startswith("```"):
-                output = output.split("```")[1]
-                if output.startswith("json"):
-                    output = output[4:]
-            result = json.loads(output.strip())
-        except json.JSONDecodeError as e:
+            result = parse_llm_json(output)
+        except (json.JSONDecodeError, ValueError) as e:
+            logger.warning("Failed to parse %s output: %s", agent_name, e)
             console.print(f"[red]  Failed to parse {agent_name} output:[/] {e}")
             raw_path = workspace / f"build_raw_{agent_name}.txt"
             raw_path.write_text(output)

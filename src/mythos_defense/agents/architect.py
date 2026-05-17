@@ -1,7 +1,7 @@
 """Architect Agent — produces threat model from a brief."""
 from __future__ import annotations
-import json
 from mythos_defense.agents.base import BaseAgent, AgentResult
+from mythos_defense.utils import parse_llm_json
 
 
 class ArchitectAgent(BaseAgent):
@@ -15,13 +15,8 @@ class ArchitectAgent(BaseAgent):
         result = self._call(system, user)
 
         try:
-            text = result.output.strip()
-            if text.startswith("```"):
-                text = text.split("```")[1]
-                if text.startswith("json"):
-                    text = text[4:]
-            result.structured = json.loads(text.strip())
-        except json.JSONDecodeError as e:
+            result.structured = parse_llm_json(result.output)
+        except (ValueError, KeyError) as e:
             raise ValueError(f"Architect output not valid JSON: {e}\nRaw: {result.output[:500]}")
 
         return result

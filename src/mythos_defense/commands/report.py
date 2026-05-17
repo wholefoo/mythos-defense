@@ -1,6 +1,7 @@
 """mythos report — generate weekly security + performance reports."""
 from __future__ import annotations
 import json
+import logging
 import os
 import time
 from pathlib import Path
@@ -8,7 +9,9 @@ import click
 from rich.console import Console
 from rich.table import Table
 from anthropic import Anthropic
+from mythos_defense.utils import parse_llm_json
 
+logger = logging.getLogger(__name__)
 console = Console()
 
 REPORT_SYSTEM_PROMPT = """You are a security and performance analyst. Given scan data, dependency info, and project context, produce a concise weekly report.
@@ -172,12 +175,9 @@ def _generate_ai_report(scan_data: dict, dep_data: dict, workflow_data: dict) ->
             messages=[{"role": "user", "content": f"Generate the report.\n\n{context}"}],
         )
         output = response.content[0].text.strip()
-        if output.startswith("```"):
-            output = output.split("```")[1]
-            if output.startswith("json"):
-                output = output[4:]
-        return json.loads(output.strip())
-    except Exception:
+        return parse_llm_json(output)
+    except Exception as e:
+        logger.warning("AI report generation failed: %s", e)
         return None
 
 

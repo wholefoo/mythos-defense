@@ -1,5 +1,6 @@
 """Budget enforcement across a workflow."""
 from __future__ import annotations
+import time
 from dataclasses import dataclass, field
 
 
@@ -13,7 +14,7 @@ class Budget:
     tokens_used: int = 0
     iterations: int = 0
     blue_attempts: dict[str, int] = field(default_factory=dict)
-    started_at: float = 0.0
+    started_at: float = field(default_factory=time.time)
 
     def spend_tokens(self, n: int) -> None:
         self.tokens_used += n
@@ -23,6 +24,8 @@ class Budget:
             return False, "max_tokens exceeded"
         if self.iterations >= self.max_iterations:
             return False, "max_iterations reached"
+        if self.max_wall_seconds > 0 and (time.time() - self.started_at) > self.max_wall_seconds:
+            return False, "wall_time_exceeded"
         return True, ""
 
     def can_attempt_patch(self, finding_id: str) -> bool:

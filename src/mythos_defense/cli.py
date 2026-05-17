@@ -50,6 +50,9 @@ def assess(workspace, brief, adapter, output, max_iterations, max_tokens, fixtur
         rt_adapter = MockAdapter(fixtures_dir=fixtures)
     elif adapter == "semgrep":
         rt_adapter = SemgrepAdapter()
+    else:
+        console.print(f"[red]Unknown adapter: {adapter}[/]")
+        sys.exit(1)
 
     workflow_id = f"wf-{uuid.uuid4().hex[:8]}"
     cfg = WorkflowConfig(
